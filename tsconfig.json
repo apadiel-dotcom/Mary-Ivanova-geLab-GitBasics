@@ -1,0 +1,12 @@
+{
+  "compilerOptions": {
+    "target": "ES6",
+    "module": "commonjs",
+    "outDir": "./dist",
+    "rootDir": "./",
+    "strict": true,
+    "esModuleInterop": true
+  },
+  "include": ["*.ts", "src/models/Animal.ts", "src/models/Cat.ts", "src/models/Dog.ts", "src/models/IAnimal.ts", "src/models/Lion.ts", "src/models/Monkey.ts", "src/models/Parrot.ts", "src/models/zoo.ts", "src/index.ts"],
+  "exclude": ["node_modules"]
+}
