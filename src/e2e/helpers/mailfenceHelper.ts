@@ -4,28 +4,28 @@ import fs from 'fs';
 
 export class MailfenceHelper {
   // -------------------
-  // Логин пользователя
+  // User login
   // -------------------
   async login(page: Page, username: string, password: string) {
     await page.fill('#username', username);
     await page.fill('#password', password);
     await page.click('button:has-text("Sign in")');
     await page.waitForSelector('text=Inbox', { timeout: 60000 });
-    console.log('✅ Пользователь залогинился и находится в Inbox');
+    console.log('User successfully logged in and is in Inbox');
   }
 
   // -------------------------------------------------
-  // Составляем и отправляем письмо с вложением
+  // Compose and send email with attachment
   // -------------------------------------------------
   async composeAndSendEmail(page: Page, subject: string, body: string, attachmentPath: string) {
-    await page.click('[data-testid="sidebar:compose"]'); 
+    await page.click('[data-testid="sidebar:compose"]');
     await page.waitForSelector('.composer-container', { timeout: 10000 });
-    console.log('✉️ Открыл форму создания письма');
+    console.log('Opened new email form');
 
     const toEmail = process.env.MAILFENCE_USER!;
     await page.fill('input[data-testid="composer:to"]', toEmail);
     await page.fill('input[data-testid="composer:subject"]', subject);
-    console.log(`✉️ Заполнены поля To: ${toEmail} и Subject: ${subject}`);
+    console.log(`Filled in fields To: ${toEmail} and Subject: ${subject}`);
 
     const iframeLocator = page.frameLocator('iframe[data-testid="rooster-iframe"]');
     const bodyInIframe = iframeLocator.locator('body[contenteditable="true"]');
@@ -39,7 +39,7 @@ export class MailfenceHelper {
         await page.fill('textarea[name="body"]', body).catch(() => {});
       }
     }
-    console.log('✉️ Тело письма заполнено');
+    console.log('Email body filled in');
 
     const fileInput = page.locator('input[type="file"]');
     if (await fileInput.count() > 0) {
@@ -47,39 +47,39 @@ export class MailfenceHelper {
         ? attachmentPath
         : path.resolve(__dirname, '../test-data', attachmentPath);
       if (!fs.existsSync(absolutePath)) {
-        throw new Error(`Файл не найден по пути: ${absolutePath}`);
+        throw new Error(`File not found at path: ${absolutePath}`);
       }
       await fileInput.setInputFiles(absolutePath);
-      console.log(`📎 Вложение установлено: ${absolutePath}`);
+      console.log(`Attachment added: ${absolutePath}`);
     } else {
-      throw new Error('Не найден элемент для загрузки файла (input[type="file"]).');
+      throw new Error('Element for uploading a file (input[type="file"]) not found.');
     }
 
     await page.click('button[data-testid="composer:send-button"]');
     await page.waitForSelector('text=Message sent', { timeout: 20000 }).catch(() => {});
-    console.log(`✅ Письмо с темой "${subject}" отправлено`);
+    console.log(`Email with subject "${subject}" sent`);
   }
 
   // -----------------------
-  // Ждем появления письма в Inbox
+  // Wait for email to appear in Inbox
   // -----------------------
   async waitForEmailInInbox(page: Page, subject: string, timeout = 120000) {
     await page.click('text=Inbox').catch(() => {});
     await page.waitForSelector(`text=${subject}`, { timeout });
-    console.log(`📥 Письмо с темой "${subject}" появилось в Inbox`);
+    console.log(`Email with subject "${subject}" appeared in Inbox`);
   }
 
   // -----------------------
-  // Открыть письмо по теме
+  // Open email by subject
   // -----------------------
   async openEmailBySubject(page: Page, subject: string) {
     await page.click(`text=${subject}`);
     await page.waitForSelector('text=Attachments', { timeout: 20000 }).catch(() => {});
-    console.log(`📬 Письмо с темой "${subject}" открыто`);
+    console.log(`Email with subject "${subject}" opened`);
   }
 
   // -----------------------
-  // Сохранить все вложения в Documents
+  // Save all attachments to Documents
   // -----------------------
   async saveAttachmentToDocuments(page: Page) {
     const downloadAllButton = page.locator('button[data-testid="attachment-list:download-all"]');
@@ -95,51 +95,51 @@ export class MailfenceHelper {
 
     const filePath = path.join(downloadsPath, await download.suggestedFilename());
     await download.saveAs(filePath);
-    console.log(`📄 Все вложения сохранены в: ${filePath}`);
+    console.log(`All attachments saved to: ${filePath}`);
   }
 
   // -----------------------
-  // Перемещаем письмо в корзину
+  // Move email to Trash
   // -----------------------
   async moveEmailToTrash(page: Page) {
     const moveToTrashBtn = page.locator('button:has-text("Move to trash")').first();
     await expect(moveToTrashBtn).toBeVisible({ timeout: 10000 });
     await moveToTrashBtn.click();
-    console.log('🗑 Письмо перемещено в Trash');
+    console.log('Email moved to Trash');
   }
 
   // -----------------------
-  // Проверка письма в корзине
+  // Verify email in Trash
   // -----------------------
   async verifyEmailInTrash(page: Page, subject: string) {
-    // Разворачиваем меню "More", если нужно
+    // Expand "More" menu if necessary
     const moreBtn = page.locator('button[title="More"]');
     if (await moreBtn.isVisible()) await moreBtn.click();
 
-    // Переходим в Trash
+    // Go to Trash
     const trashLink = page.locator('span[title^="Trash"]');
     await expect(trashLink).toBeVisible({ timeout: 10000 });
     await trashLink.click();
-    console.log('🗑 Нажали на Trash');
+    console.log('Clicked on Trash');
 
-    // Локатор для контейнера письма по теме
+    // Email container by subject
     const emailContainer = page.locator(`div[data-testid="message-item:${subject}"]`);
 
-    // Прокручиваем к письму
+    // Scroll to email
     await emailContainer.scrollIntoViewIfNeeded();
 
     const count = await emailContainer.count();
 
     if (count === 0) {
-      // Для отладки выводим все контейнеры
+      // Debugging: print all email subjects in Trash
       const allSubjects = await page.$$eval(
         'div[data-testid^="message-item:"]',
         nodes => nodes.map(n => n.getAttribute('data-testid'))
       );
-      console.log('📃 Все письма в Trash:', allSubjects);
-      throw new Error(`❌ Письмо с темой "${subject}" не найдено в Trash`);
+      console.log('All emails in Trash:', allSubjects);
+      throw new Error(`Email with subject "${subject}" not found in Trash`);
     }
 
-    console.log(`✅ Письмо с темой "${subject}" найдено в Trash`);
+    console.log(`Email with subject "${subject}" found in Trash`);
   }
 }
