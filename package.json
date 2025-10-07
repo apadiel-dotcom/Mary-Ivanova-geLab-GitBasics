@@ -5,13 +5,19 @@
   "main": "index.js",
   "scripts": {
     "start": "npx tsc && node dist/zoo.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "test:e2e": "npx playwright test",
+    "test:e2e:headed": "npx playwright test --headed",
+    "test:e2e:debug": "npx playwright test --debug"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "devDependencies": {
+    "@playwright/test": "^1.55.1",
     "@types/node": "^24.3.0",
+    "dotenv": "^17.2.3",
+    "playwright": "^1.55.1",
     "typescript": "^5.9.2"
   }
 }
