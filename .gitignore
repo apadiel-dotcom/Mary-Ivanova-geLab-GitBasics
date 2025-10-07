@@ -11,6 +11,7 @@ build/
 out/
 tmp/
 temp/
+documents/
 
 # TypeScript
 *.tsbuildinfo
@@ -27,3 +28,12 @@ temp/
 # OS
 .DS_Store
 Thumbs.db
+
+
+# environment
+.env
+
+# Playwright
+playwright-report/
+test-results/
+
